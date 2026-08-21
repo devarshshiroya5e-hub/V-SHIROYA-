@@ -42,4 +42,20 @@ if (source.includes(bodyLine) && !source.includes("Access-Control-Allow-Origin")
 }
 
 fs.writeFileSync(serverFile, source, "utf8");
-console.log("render-ai-fix: patched dist/server.cjs successfully");
+
+// If the frontend is served from Firebase/static hosting, route only the AI
+// analysis call to the Render backend. The UI and all visual code remain unchanged.
+const assetsDir = path.resolve("dist/assets");
+if (fs.existsSync(assetsDir)) {
+  for (const name of fs.readdirSync(assetsDir)) {
+    if (!name.endsWith(".js")) continue;
+    const file = path.join(assetsDir, name);
+    let js = fs.readFileSync(file, "utf8");
+    if (js.includes("/api/analyze-policy")) {
+      js = js.replaceAll("/api/analyze-policy", "https://v-shiroya-policy.onrender.com/api/analyze-policy");
+      fs.writeFileSync(file, js, "utf8");
+    }
+  }
+}
+
+console.log("render-ai-fix: patched backend and frontend AI API successfully");
