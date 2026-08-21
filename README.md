@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
@@ -19,3 +20,6 @@ View your app in AI Studio: https://ai.studio/apps/d4756037-1df0-4ee5-8c0e-1fdb8
 3. Run the app:
    `npm run dev`
 "# V-SHIROYA-" 
+=======
+# V-SHIROYA-
+>>>>>>> 5cdc2b273264a699f9c41b13ddc6516c363bc163
