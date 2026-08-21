@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Global dark mode root setup */
+html.dark {
+  color-scheme: dark;
+  background-color: #020617;
+}
+
+/* Crisp non-blurry transitions & lift-up hover states */
+@layer utilities {
+  .lift-card-primary {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, background-color 0.25s ease;
+  }
+  .lift-card-primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+  }
+
+  .lift-card-secondary {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+  }
+  .lift-card-secondary:hover {
+    transform: translateY(-2.5px);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .lift-card-subtle {
+    transition: transform 0.18s ease-out, background-color 0.18s ease, border-color 0.18s ease;
+  }
+  .lift-card-subtle:hover {
+    transform: translateY(-1.5px);
+  }
+
+  .lift-button {
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+  .lift-button:hover:not(:disabled) {
+    transform: translateY(-2px) scale(1.015);
+  }
+  .lift-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.975);
+  }
+}
+
+/* Laser Scanning Line Keyframe */
+@keyframes laserScan {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0.2;
+  }
+}
+
+.animate-laser-scan {
+  animation: laserScan 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Shimmer Light Sweep on Primary Buttons */
+.light-sweep-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.light-sweep-container::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -150%;
+  width: 100%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  transition: transform 0.8s ease-in-out;
+}
+
+.light-sweep-container:hover::after {
+  transform: translate(300%, 0) rotate(25deg);
+}
+
+/* Animated Shimmer Text */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-shimmer-text {
+  background: linear-gradient(135deg, #4f46e5 0%, #d97706 35%, #0284c7 70%, #6366f1 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 6s ease infinite;
+}
+
+.dark .animated-shimmer-text {
+  background: linear-gradient(135deg, #818cf8 0%, #fbbf24 35%, #38bdf8 70%, #a5b4fc 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 6s ease infinite;
+}
+
+/* Radar Scan Pulse */
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.animate-radar-pulse {
+  animation: radarPulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+/* Ensure ultra-crisp text rendering with hardware accelerated transforms */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent any blurry text/box during transform animations */
+.no-blur {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Accessibility: Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

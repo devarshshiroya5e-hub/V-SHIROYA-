@@ -1,0 +1,54 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#F9E088" />
+      <stop offset="35%" stopColor="#DFAC37" />
+      <stop offset="70%" stopColor="#C28919" />
+      <stop offset="100%" stopColor="#8A5A00" />
+    </linearGradient>
+
+    <linearGradient id="goldLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stopColor="#FFF2B2" />
+      <stop offset="50%" stopColor="#E0B13D" />
+      <stop offset="100%" stopColor="#9C6B03" />
+    </linearGradient>
+
+    <linearGradient id="navyAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#1E293B" />
+      <stop offset="50%" stopColor="#0F172A" />
+      <stop offset="100%" stopColor="#020617" />
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M 22 36 C 22 58, 38 82, 60 98 C 82 82, 98 58, 98 36"
+    stroke="url(#goldPrimary)"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <path
+    d="M 28 26 C 42 22, 54 18, 60 14 C 66 18, 78 22, 92 26"
+    stroke="url(#goldPrimary)"
+    stroke-width="3"
+    stroke-linecap="round"
+    fill="none"
+  />
+
+  <path
+    d="M 36 32 L 60 86 L 84 32 L 73 32 L 60 66 L 47 32 Z"
+    fill="url(#goldPrimary)"
+    stroke="url(#goldLight)"
+    stroke-width="1"
+  />
+
+  <path
+    d="M 72 24 C 84 20, 94 28, 86 38 C 80 34, 76 28, 72 24 Z"
+    fill="url(#navyAccent)"
+    stroke="url(#goldLight)"
+    stroke-width="1.5"
+  />
+
+  <circle cx="85" cy="25" r="3.5" fill="#F59E0B" />
+</svg>
