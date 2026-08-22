@@ -3,48 +3,58 @@ import path from "node:path";
 
 const serverFile = path.resolve("dist/server.cjs");
 if (!fs.existsSync(serverFile)) {
-  console.warn("render-ai-fix: dist/server.cjs not found; skipping");
-  process.exit(0);
+  console.error("render-ai-fix: dist/server.cjs not found");
+  process.exit(1);
 }
 
 let source = fs.readFileSync(serverFile, "utf8");
 
-// OpenRouter-only: replace the old Google/Gemini default with an OpenAI model
-// routed through OpenRouter. No Google API key is used.
+// OpenRouter-only: no Google API key is used.
 source = source.replaceAll("google/gemini-3-flash-preview", "openai/gpt-4.1-mini");
 
-// Some providers may return message.content as an array. Normalize it before
-// JSON parsing so a valid AI answer is not incorrectly treated as a failure.
 const oldParser = 'const text = data?.choices?.[0]?.message?.content;\n        const parsed = parseJsonSafely(typeof text === "string" ? text : JSON.stringify(text || {}));';
 const newParser = `const rawContent = data?.choices?.[0]?.message?.content;
         const text = Array.isArray(rawContent)
           ? rawContent.map((part) => typeof part === "string" ? part : (part?.text || "")).join("\\n")
           : rawContent;
         const parsed = parseJsonSafely(typeof text === "string" ? text : JSON.stringify(text || {}));`;
-if (source.includes(oldParser)) source = source.replace(oldParser, newParser);
+source = source.replace(oldParser, newParser);
 
-// Allow a separately hosted Firebase/static frontend to call the Render API.
-// API keys remain server-side and are never exposed to the browser.
-const bodyLine = 'app.use(express.urlencoded({ limit: "100mb", extended: true }));';
-const corsBlock = `${bodyLine}
+// Firebase Hosting and Render are different origins. Always install CORS before routes.
+if (!source.includes("__V_SHIROYA_CORS__")) {
+  const anchor = 'app.use(express.urlencoded({ limit: "100mb", extended: true }));';
+  const corsBlock = `${anchor}
+
+// __V_SHIROYA_CORS__
+const allowedOrigins = new Set([
+  "https://v-shiroya-insurance.web.app",
+  "https://v-shiroya-insurance.firebaseapp.com",
+  "https://v-shiroya-policy.onrender.com",
+  ...String(process.env.CORS_ORIGINS || "").split(",").map((value) => value.trim()).filter(Boolean)
+]);
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin) res.setHeader("Access-Control-Allow-Origin", origin);
+  if (origin && (allowedOrigins.has(origin) || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com") || origin.endsWith(".onrender.com"))) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
   res.setHeader("Vary", "Origin");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
+  res.setHeader("Access-Control-Max-Age", "86400");
+  if (req.method === "OPTIONS") return res.status(204).end();
   next();
 });`;
-if (source.includes(bodyLine) && !source.includes("Access-Control-Allow-Origin")) {
-  source = source.replace(bodyLine, corsBlock);
+  if (!source.includes(anchor)) {
+    console.error("render-ai-fix: CORS anchor not found");
+    process.exit(1);
+  }
+  source = source.replace(anchor, corsBlock);
 }
 
 fs.writeFileSync(serverFile, source, "utf8");
 
-// If the frontend is served from Firebase/static hosting, route only the AI
-// analysis call to the Render backend. The UI and all visual code remain unchanged.
+// Keep the existing UI unchanged, but route AI analysis directly to Render.
 const assetsDir = path.resolve("dist/assets");
 if (fs.existsSync(assetsDir)) {
   for (const name of fs.readdirSync(assetsDir)) {
@@ -58,4 +68,4 @@ if (fs.existsSync(assetsDir)) {
   }
 }
 
-console.log("render-ai-fix: patched backend and frontend AI API successfully");
+console.log("render-ai-fix: OpenRouter, CORS, and frontend API patches applied successfully");
