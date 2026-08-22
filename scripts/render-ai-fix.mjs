@@ -9,27 +9,24 @@ if (!fs.existsSync(serverFile)) {
 
 let source = fs.readFileSync(serverFile, "utf8");
 
-// Keep the backend OpenRouter-only and use a fast model that can be configured in Render.
+// Keep the backend OpenRouter-only and use a fast default model.
 source = source.replaceAll("google/gemini-3-flash-preview", "openai/gpt-4.1-mini");
 
-// Robust CORS must exist in the ACTUAL Render build, before every API route.
-if (!source.includes("__V_SHIROYA_CORS_V2__")) {
-  const anchor = 'app.use(express.urlencoded({ limit: "100mb", extended: true }));';
-  const corsBlock = `${anchor}
-
-// __V_SHIROYA_CORS_V2__
+// IMPORTANT: Do not depend on an exact esbuild output string. The previous script failed
+// because esbuild changed quote/whitespace formatting and the old CORS anchor was not found.
+if (!source.includes("__V_SHIROYA_CORS_V3__")) {
+  const corsBlock = `
+// __V_SHIROYA_CORS_V3__
 const allowedOrigins = new Set([
   "https://v-shiroya-insurance.web.app",
   "https://v-shiroya-insurance.firebaseapp.com",
   "https://v-shiroya-policy.onrender.com",
   ...String(process.env.CORS_ORIGINS || "").split(",").map((value) => value.trim()).filter(Boolean)
 ]);
-
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && (allowedOrigins.has(origin) || origin.endsWith(".web.app") || origin.endsWith(".firebaseapp.com"))) {
     res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Access-Control-Allow-Credentials", "false");
   }
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -37,52 +34,51 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Max-Age", "86400");
   if (req.method === "OPTIONS") return res.status(204).end();
   next();
-});`;
-  if (!source.includes(anchor)) {
-    console.error("render-ai-fix: CORS anchor not found");
+});
+`;
+
+  // Insert before the first application data declaration. This survives esbuild formatting.
+  const dataAnchor = /const\s+DATA_FILE\s*=\s*path\.join/;
+  const match = source.match(dataAnchor);
+  if (!match || match.index === undefined) {
+    console.error("render-ai-fix: CORS insertion point not found");
     process.exit(1);
   }
-  source = source.replace(anchor, corsBlock);
+  source = source.slice(0, match.index) + corsBlock + source.slice(match.index);
 }
 
-// Accept both API path variants. This prevents an HTML SPA fallback when an old deployed
-// frontend uses /analyze-policy while the current frontend uses /api/analyze-policy.
-source = source.replace(
-  'app.post("/api/analyze-policy", async (req, res) => {',
-  'const analyzePolicyHandler = async (req, res) => {'
-);
-source = source.replace(
-  '});\n\napp.get("/api/policies", (req, res) => {',
-  '};\napp.post("/api/analyze-policy", analyzePolicyHandler);\napp.post("/analyze-policy", analyzePolicyHandler);\n\napp.get("/api/policies", (req, res) => {'
-);
-
-// Never return index.html for a missing API route. JSON parsing errors like
-// Unexpected token < usually happen when an API request receives the SPA HTML shell.
-const apiFallbackAnchor = '    app.use(express.static(distPath));\n    app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));';
-if (source.includes(apiFallbackAnchor)) {
-  source = source.replace(apiFallbackAnchor, `    app.use(express.static(distPath));
-    app.use("/api", (_req, res) => res.status(404).json({ error: "API endpoint not found" }));
-    app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));`);
+// Never return index.html for an unknown API route. This prevents HTML being parsed as JSON.
+if (!source.includes("__V_SHIROYA_API_404_V2__")) {
+  const staticAnchor = 'app.use(express.static(distPath));';
+  const staticIndex = source.indexOf(staticAnchor);
+  if (staticIndex !== -1) {
+    const insertAt = staticIndex + staticAnchor.length;
+    const api404 = `\napp.use("/api", (_req, res) => res.status(404).json({ error: "API endpoint not found", code: "API_NOT_FOUND" })); // __V_SHIROYA_API_404_V2__`;
+    source = source.slice(0, insertAt) + api404 + source.slice(insertAt);
+  }
 }
 
-// Make backend responses diagnosable and guarantee JSON for malformed request bodies.
-if (!source.includes("__V_SHIROYA_JSON_ERROR_V1__")) {
-  const startAnchor = 'async function startServer() {';
-  const errorBlock = `// __V_SHIROYA_JSON_ERROR_V1__
+// Guarantee JSON for malformed JSON request bodies.
+if (!source.includes("__V_SHIROYA_JSON_ERROR_V2__")) {
+  const startPattern = /async function startServer\s*\(\s*\)\s*\{/;
+  const startMatch = source.match(startPattern);
+  if (startMatch && startMatch.index !== undefined) {
+    const errorBlock = `// __V_SHIROYA_JSON_ERROR_V2__
 app.use((err, _req, res, next) => {
   if (err && (err.type === "entity.parse.failed" || err instanceof SyntaxError)) {
-    return res.status(400).json({ error: "Invalid JSON request body" });
+    return res.status(400).json({ error: "Invalid JSON request body", code: "INVALID_JSON" });
   }
   next(err);
 });
 
-async function startServer() {`;
-  if (source.includes(startAnchor)) source = source.replace(startAnchor, errorBlock);
+`;
+    source = source.slice(0, startMatch.index) + errorBlock + source.slice(startMatch.index);
+  }
 }
 
 fs.writeFileSync(serverFile, source, "utf8");
 
-// Keep the existing UI/design untouched. Only change API URLs in the built JavaScript.
+// Keep the existing UI/design untouched. Only point API calls to the Render backend.
 const assetsDir = path.resolve("dist/assets");
 const apiBase = "https://v-shiroya-policy.onrender.com";
 const backendPaths = [
@@ -107,4 +103,4 @@ if (fs.existsSync(assetsDir)) {
   }
 }
 
-console.log("render-ai-fix: backend CORS, API fallbacks, JSON errors, aliases, and non-visual API routing applied");
+console.log("render-ai-fix: robust CORS and backend API patch applied");
