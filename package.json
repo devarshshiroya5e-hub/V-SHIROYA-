@@ -1,16 +1,16 @@
 {
   "name": "v-shiroya-insurance",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx server-render.ts",
     "build": "npm run build:client && npm run build:server && npm run verify:server",
     "build:client": "vite build",
-    "build:server": "esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "build:server": "esbuild server-render.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "verify:server": "node -e \"const fs=require('fs'); const p='dist/server.cjs'; if(!fs.existsSync(p)){console.error('Backend build failed: '+p+' was not created'); process.exit(1)} console.log('Backend bundle verified:', p)\"",
     "start": "npm run build:server && npm run verify:server && node dist/server.cjs",
     "clean": "rm -rf dist server.cjs",
