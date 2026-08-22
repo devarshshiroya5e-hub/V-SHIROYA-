@@ -11,3 +11,7 @@ services:
         value: 20.20.2
       - key: NODE_ENV
         value: production
+      - key: ALLOWED_ORIGINS
+        value: https://v-shiroya-insurance.web.app,https://v-shiroya-insurance.firebaseapp.com,https://v-shiroya-policy.onrender.com
+      - key: OPENROUTER_PDF_ENGINE
+        value: mistral-ocr
