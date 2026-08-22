@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: v-shiroya-policy
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    autoDeployTrigger: commit
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.20.2
+      - key: NODE_ENV
+        value: production
