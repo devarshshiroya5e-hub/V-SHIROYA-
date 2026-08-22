@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "postbuild": "node scripts/render-ai-fix.mjs",
-    "start": "sh -c 'if [ ! -f dist/server.cjs ]; then echo \"dist/server.cjs missing - building application...\"; npm run build; fi; node dist/server.cjs'",
+    "start": "npm run build && node dist/server.cjs",
     "clean": "rm -rf dist server.cjs",
     "lint": "tsc --noEmit"
   },
